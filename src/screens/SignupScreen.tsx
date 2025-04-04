@@ -1,11 +1,31 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+
+const webClientId = '270199877226-0sbo10su377r07nrjsdmnm8qm8k12bv1.apps.googleusercontent.com';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const SignupScreen = () => {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId: webClientId,  
+    redirectUri: "https://auth.expo.io/@tanmaykaushikk/bookStore", 
+    scopes: ["profile", "email"],
+  });
+
+  useEffect(() => {
+    if (response?.type === "success") {
+      const { authentication } = response;
+      console.log("Access Token:", authentication?.accessToken);
+      navigation.navigate('Landing');
+    }
+  }, [response, navigation]);
 
   const handleSignup = () => {
     if (!email.includes('@')) {
@@ -16,7 +36,7 @@ const SignupScreen = () => {
       alert('Password must be at least 6 characters');
       return;
     }
-    // For demo: navigate to Login screen, passing credentials
+   
     navigation.navigate('Login', { userEmail: email, userPassword: password });
   };
 
@@ -44,6 +64,11 @@ const SignupScreen = () => {
       
       <TouchableOpacity style={styles.button} onPress={handleSignup}>
         <Text style={styles.buttonText}>Sign Up</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.googleButton} onPress={() => promptAsync()}>
+        <Image source={{ uri: 'https://img.icons8.com/color/48/000000/google-logo.png' }} style={styles.googleIcon} />
+        <Text style={styles.googleButtonText}>Login with Google</Text>
       </TouchableOpacity>
     </View>
   );
@@ -88,6 +113,28 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff', 
     fontSize: 18, 
+    fontWeight: 'bold',
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    paddingVertical: 12,
+    width: '100%',
+    justifyContent: 'center',
+    marginTop: 15,
+  },
+  googleIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+  },
+  googleButtonText: {
+    fontSize: 16,
+    color: '#555',
     fontWeight: 'bold',
   },
 });
